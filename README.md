@@ -57,9 +57,25 @@ Starts:
 3. Add categories and items in **Admin → Menu**
 4. Open **Display & QR** to copy links and download QR code
 
+## Deploying to Vercel
+
+The frontend is a static Vite build; menu data is served by **serverless API routes** in [`api/`](api/) (same REST shape as json-server). Vercel maps `/api/*` to those functions automatically — no json-server process is needed in production.
+
+1. Import the repo in [Vercel](https://vercel.com) (framework preset: **Vite**)
+2. Build command: `npm run build` · Output directory: `dist`
+3. Deploy — demo menus at `/menu/demo-burger` and `/menu/demo-taco` should load immediately
+
+**Note:** Writes on Vercel use an in-memory copy of [`server/db.json`](server/db.json) per serverless instance. Demo edits and new restaurants work for a session but can reset after idle/cold starts. For persistent production data, migrate to Supabase (see below).
+
 ## Production path
 
-[`supabase/schema.sql`](supabase/schema.sql) defines PostgreSQL tables for a future Supabase migration. Local dev uses [`server/db.json`](server/db.json).
+[`supabase/schema.sql`](supabase/schema.sql) defines PostgreSQL tables for a future Supabase migration with real auth. Local dev uses [`server/db.json`](server/db.json) via json-server.
+
+### Security (demo deployment)
+
+- Login is **demo-only** (any email/password opens the demo admin) — not suitable for real owners without Supabase Auth.
+- Admin routes are not server-protected; anyone with a restaurant ID can call write APIs. Use real auth before going live.
+- API validates URLs, field lengths, and review ratings; demo restaurants cannot be deleted.
 
 ## Pricing (planned)
 

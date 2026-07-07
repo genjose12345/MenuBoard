@@ -57,7 +57,7 @@ export function AdminPage() {
         displayLayout: data.restaurant.branding.displayLayout ?? 'grid',
       })
     } catch {
-      setError('Could not load admin. Is json-server running?')
+      setError('Could not load admin. Please try again in a moment.')
     } finally {
       setLoading(false)
     }
@@ -110,6 +110,11 @@ export function AdminPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {import.meta.env.PROD && (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs text-amber-900">
+          Demo mode — admin is not password-protected. Do not use for real customer data until Supabase auth is enabled.
+        </div>
+      )}
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div>

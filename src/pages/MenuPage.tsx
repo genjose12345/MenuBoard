@@ -28,7 +28,7 @@ export function MenuPage() {
       const firstActive = data.categories.find((c) => c.active)
       setActiveCategoryId((prev) => prev || firstActive?.id || '')
     } catch {
-      setError('Could not load menu. Is json-server running?')
+      setError('Could not load menu. Please try again in a moment.')
     } finally {
       setLoading(false)
     }
