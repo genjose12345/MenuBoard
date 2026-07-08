@@ -12,6 +12,7 @@ import type { Restaurant, UserProfile } from '../../types'
 import { getRestaurantById, getUserRestaurantId } from '../api'
 import { getSupabase, isSupabaseConfigured } from '../supabase/client'
 import { profileFromDb } from '../supabase/mappers'
+import { formatAuthError } from './errors'
 
 interface AuthContextValue {
   configured: boolean
@@ -23,6 +24,7 @@ interface AuthContextValue {
   restaurant: Restaurant | null
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, fullName: string) => Promise<{ needsEmailConfirmation: boolean }>
+  resendConfirmationEmail: (email: string) => Promise<void>
   signOut: () => Promise<void>
   refreshAccount: () => Promise<void>
   updateProfile: (patch: Partial<Pick<UserProfile, 'fullName' | 'phone'>>) => Promise<void>
@@ -123,22 +125,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: email.trim(),
       password,
     })
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(formatAuthError(error))
     await refreshAccount()
   }, [refreshAccount])
 
   const signUp = useCallback(async (email: string, password: string, fullName: string) => {
+    const redirectTo =
+      typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined
+
     const { data, error } = await getSupabase().auth.signUp({
       email: email.trim(),
       password,
       options: {
         data: { full_name: fullName.trim() },
+        emailRedirectTo: redirectTo,
       },
     })
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(formatAuthError(error))
     await refreshAccount()
     return { needsEmailConfirmation: !data.session }
   }, [refreshAccount])
+
+  const resendConfirmationEmail = useCallback(async (email: string) => {
+    const redirectTo =
+      typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined
+
+    const { error } = await getSupabase().auth.resend({
+      type: 'signup',
+      email: email.trim(),
+      options: { emailRedirectTo: redirectTo },
+    })
+    if (error) throw new Error(formatAuthError(error))
+  }, [])
 
   const signOut = useCallback(async () => {
     const { error } = await getSupabase().auth.signOut()
@@ -186,6 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       restaurant,
       signIn,
       signUp,
+      resendConfirmationEmail,
       signOut,
       refreshAccount,
       updateProfile,
@@ -202,6 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       restaurant,
       signIn,
       signUp,
+      resendConfirmationEmail,
       signOut,
       refreshAccount,
       updateProfile,

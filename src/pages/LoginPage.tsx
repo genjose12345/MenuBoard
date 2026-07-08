@@ -5,24 +5,30 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { useAuth } from '../lib/auth/AuthProvider'
+import { isEmailNotConfirmedError } from '../lib/auth/errors'
 import { getUserRestaurantId } from '../lib/api'
 import { setOwnerSession } from '../lib/auth/session'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { configured, signIn } = useAuth()
+  const { configured, signIn, resendConfirmationEmail } = useAuth()
   const redirectTo = (location.state as { from?: string } | null)?.from
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [resending, setResending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
+    setNotice(null)
+    setNeedsConfirmation(false)
 
     try {
       if (!configured) {
@@ -42,8 +48,26 @@ export function LoginPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not log in.')
+      setNeedsConfirmation(isEmailNotConfirmedError(err))
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleResendConfirmation() {
+    if (!email.trim()) {
+      setError('Enter your email address first.')
+      return
+    }
+    setResending(true)
+    setError(null)
+    try {
+      await resendConfirmationEmail(email)
+      setNotice('Confirmation email sent. Check your inbox and spam folder.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not resend confirmation email.')
+    } finally {
+      setResending(false)
     }
   }
 
@@ -66,6 +90,12 @@ export function LoginPage() {
             <Input id="password" type="password" required autoComplete="current-password" minLength={configured ? 8 : 1} value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1" />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
+          {notice && <p className="text-sm text-green-700">{notice}</p>}
+          {needsConfirmation && (
+            <Button type="button" variant="outline" className="w-full" disabled={resending} onClick={() => void handleResendConfirmation()}>
+              {resending ? 'Sending…' : 'Resend confirmation email'}
+            </Button>
+          )}
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting ? 'Signing in…' : 'Log in'}
           </Button>

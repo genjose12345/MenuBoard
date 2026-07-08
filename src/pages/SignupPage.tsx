@@ -44,7 +44,9 @@ export function SignupPage() {
 
       const { needsEmailConfirmation } = await signUp(email, password, fullName)
       if (needsEmailConfirmation) {
-        setMessage('Check your email to confirm your account, then log in.')
+        setMessage(
+          'Account created! Check your email and click the confirmation link, then come back here to log in.',
+        )
         return
       }
       navigate('/get-started')

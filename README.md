@@ -61,11 +61,22 @@ Add the same two env vars in your Vercel project settings, then redeploy.
 
 | Step | Route |
 |------|-------|
-| Sign up | `/signup` → confirm email (if enabled) → `/get-started` |
+| Sign up | `/signup` → confirm email (if enabled) → `/login` |
 | Log in | `/login` → your admin dashboard |
 | Profile | `/profile` — name, email, password, business phone, plan |
 
 Each account can own **one restaurant**. Demo restaurants are read-only previews.
+
+**Login returns 400?** Common causes:
+
+1. **Email not confirmed** — check inbox/spam, or click “Resend confirmation email” on the login page.
+2. **Wrong password** — use the same password from signup.
+3. **No account yet** — sign up first at `/signup`.
+
+To skip email confirmation during testing: Supabase Dashboard → **Authentication** → **Providers** → **Email** → disable **Confirm email**, then sign up again.
+
+Also add your site URL under **Authentication** → **URL Configuration** → **Redirect URLs**:
+`https://your-app.vercel.app/login`
 
 ### Security
 
