@@ -15,11 +15,14 @@ import { getPendingReviews } from '../lib/reviews'
 import { getMenuUrl } from '../lib/qr'
 import { AdminUserMenu } from '../components/admin/AdminUserMenu'
 import { planDisplayName, reviewsEnabled } from '../lib/plans'
+import { useAuth } from '../lib/auth/AuthProvider'
+import { isDemoRestaurant } from '../lib/demo'
 
 type Tab = 'menu' | 'reviews' | 'branding' | 'display'
 
 export function AdminPage() {
   const { restaurantId } = useParams<{ restaurantId: string }>()
+  const { configured, loading: authLoading, restaurantId: ownedRestaurantId } = useAuth()
   const [tab, setTab] = useState<Tab>('menu')
   const [menu, setMenu] = useState<RestaurantMenu | null>(null)
   const [loading, setLoading] = useState(true)
@@ -33,6 +36,11 @@ export function AdminPage() {
     primaryColor: '#ea580c',
     displayLayout: 'grid' as DisplayLayoutId,
   })
+
+  const isDemo = restaurantId ? isDemoRestaurant(restaurantId) : false
+  const isOwner = !configured || ownedRestaurantId === restaurantId
+  const canEdit = isOwner && !isDemo
+  const canView = !configured || isOwner || isDemo
 
   const load = useCallback(async () => {
     if (!restaurantId) return
@@ -68,7 +76,7 @@ export function AdminPage() {
   }, [load])
 
   async function handleSaveBranding() {
-    if (!menu) return
+    if (!menu || !canEdit) return
     const updated = {
       ...menu.restaurant,
       name: brandDraft.name.trim(),
@@ -85,8 +93,19 @@ export function AdminPage() {
     void load()
   }
 
-  if (loading) {
+  if (loading || authLoading) {
     return <div className="flex min-h-screen items-center justify-center text-slate-500">Loading admin…</div>
+  }
+
+  if (!canView) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-4 text-center">
+        <p className="text-red-600">You do not have permission to manage this restaurant.</p>
+        <Link to="/login" className="text-orange-600 hover:underline">
+          Log in with the owner account
+        </Link>
+      </div>
+    )
   }
 
   if (error || !menu) {
@@ -110,9 +129,18 @@ export function AdminPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {import.meta.env.PROD && (
+      {isDemo && (
         <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs text-amber-900">
-          Demo mode — admin is not password-protected. Do not use for real customer data until Supabase auth is enabled.
+          Demo restaurant — read-only preview.{' '}
+          <Link to="/get-started" className="font-semibold underline">
+            Create your own menu
+          </Link>{' '}
+          to get full admin access.
+        </div>
+      )}
+      {!canEdit && !isDemo && configured && (
+        <div className="border-b border-red-200 bg-red-50 px-4 py-2 text-center text-xs text-red-800">
+          View-only — you are not the owner of this restaurant.
         </div>
       )}
       <header className="border-b border-slate-200 bg-white">
@@ -166,6 +194,7 @@ export function AdminPage() {
             categories={menu.categories}
             items={menu.items}
             onUpdated={() => void load()}
+            readOnly={!canEdit}
           />
         )}
 
@@ -183,7 +212,12 @@ export function AdminPage() {
         )}
 
         {tab === 'reviews' && reviewsEnabled(menu.restaurant.plan) && (
-          <ReviewModeration reviews={menu.reviews} items={menu.items} onUpdated={() => void load()} />
+          <ReviewModeration
+            reviews={menu.reviews}
+            items={menu.items}
+            onUpdated={() => void load()}
+            readOnly={!canEdit}
+          />
         )}
 
         {tab === 'branding' && (
@@ -195,6 +229,7 @@ export function AdminPage() {
                 className="mt-1"
                 value={brandDraft.name}
                 onChange={(e) => setBrandDraft({ ...brandDraft, name: e.target.value })}
+                readOnly={!canEdit}
               />
             </div>
             <div>
@@ -203,6 +238,7 @@ export function AdminPage() {
                 className="mt-1"
                 value={brandDraft.tagline}
                 onChange={(e) => setBrandDraft({ ...brandDraft, tagline: e.target.value })}
+                readOnly={!canEdit}
               />
             </div>
             <div>
@@ -213,6 +249,7 @@ export function AdminPage() {
                 value={brandDraft.phone}
                 onChange={(e) => setBrandDraft({ ...brandDraft, phone: e.target.value })}
                 placeholder="(555) 123-4567"
+                readOnly={!canEdit}
               />
             </div>
             <div>
@@ -223,6 +260,7 @@ export function AdminPage() {
                 onChange={(e) =>
                   setBrandDraft({ ...brandDraft, displayLayout: e.target.value as DisplayLayoutId })
                 }
+                disabled={!canEdit}
               >
                 {DISPLAY_LAYOUTS.map((l) => (
                   <option key={l.id} value={l.id}>
@@ -237,6 +275,7 @@ export function AdminPage() {
                 className="mt-1"
                 value={brandDraft.logoUrl}
                 onChange={(e) => setBrandDraft({ ...brandDraft, logoUrl: e.target.value })}
+                readOnly={!canEdit}
               />
             </div>
             <div>
@@ -247,13 +286,20 @@ export function AdminPage() {
                   className="h-10 w-16 p-1"
                   value={brandDraft.primaryColor}
                   onChange={(e) => setBrandDraft({ ...brandDraft, primaryColor: e.target.value })}
+                  disabled={!canEdit}
                 />
-                <Input value={brandDraft.primaryColor} onChange={(e) => setBrandDraft({ ...brandDraft, primaryColor: e.target.value })} />
+                <Input
+                  value={brandDraft.primaryColor}
+                  onChange={(e) => setBrandDraft({ ...brandDraft, primaryColor: e.target.value })}
+                  readOnly={!canEdit}
+                />
               </div>
             </div>
-            <Button type="button" onClick={handleSaveBranding}>
-              Save branding
-            </Button>
+            {canEdit && (
+              <Button type="button" onClick={() => void handleSaveBranding()}>
+                Save branding
+              </Button>
+            )}
           </div>
         )}
 

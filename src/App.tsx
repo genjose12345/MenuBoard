@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { RequireAuth } from './components/auth/RequireAuth'
 import { AdminPage } from './pages/AdminPage'
 import { DisplayPage } from './pages/DisplayPage'
 import { GetStartedPage } from './pages/GetStartedPage'
@@ -18,8 +19,22 @@ export function App() {
         <Route path="/admin/:restaurantId" element={<AdminPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/get-started" element={<GetStartedPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route
+          path="/get-started"
+          element={
+            <RequireAuth>
+              <GetStartedPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth>
+              <ProfilePage />
+            </RequireAuth>
+          }
+        />
       </Routes>
     </BrowserRouter>
   )

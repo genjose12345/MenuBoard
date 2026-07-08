@@ -6,7 +6,7 @@ import type {
   Restaurant,
   RestaurantMenu,
   SubmitReviewInput,
-} from '../types'
+} from '../../types'
 
 const API_BASE = '/api'
 
@@ -17,7 +17,8 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   })
 
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.statusText}`)
+    const body = await response.json().catch(() => null) as { error?: string } | null
+    throw new Error(body?.error ?? `Request failed: ${response.statusText}`)
   }
 
   if (response.status === 204) {
@@ -203,4 +204,12 @@ export async function moderateReview(
 
 export async function getReviewsByRestaurant(restaurantId: string): Promise<ItemReview[]> {
   return request<ItemReview[]>(`/item_reviews?restaurantId=${encodeURIComponent(restaurantId)}`)
+}
+
+export async function linkRestaurantToUser(): Promise<void> {
+  // No-op for local API
+}
+
+export async function getUserRestaurantId(): Promise<string | null> {
+  return null
 }

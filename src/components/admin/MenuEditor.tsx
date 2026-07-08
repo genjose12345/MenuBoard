@@ -22,6 +22,7 @@ interface MenuEditorProps {
   categories: MenuCategory[]
   items: MenuItem[]
   onUpdated: () => void
+  readOnly?: boolean
 }
 
 const emptyNutrition: NutritionFacts = {
@@ -34,7 +35,7 @@ const emptyNutrition: NutritionFacts = {
   allergens: [],
 }
 
-export function MenuEditor({ restaurant, categories, items, onUpdated }: MenuEditorProps) {
+export function MenuEditor({ restaurant, categories, items, onUpdated, readOnly = false }: MenuEditorProps) {
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [message, setMessage] = useState<string | null>(null)
@@ -142,6 +143,7 @@ export function MenuEditor({ restaurant, categories, items, onUpdated }: MenuEdi
           <CardTitle>Categories</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          {!readOnly && (
           <div className="flex gap-2">
             <Input
               value={newCategoryName}
@@ -153,6 +155,7 @@ export function MenuEditor({ restaurant, categories, items, onUpdated }: MenuEdi
               Add
             </Button>
           </div>
+          )}
           <ul className="space-y-2">
             {[...categories]
               .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -162,6 +165,7 @@ export function MenuEditor({ restaurant, categories, items, onUpdated }: MenuEdi
                   className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2"
                 >
                   <span className="font-medium">{cat.name}</span>
+                  {!readOnly && (
                   <div className="flex gap-1">
                     <Button type="button" size="sm" variant="outline" onClick={() => moveCategory(cat, -1)}>
                       <ChevronUp className="h-4 w-4" />
@@ -181,6 +185,7 @@ export function MenuEditor({ restaurant, categories, items, onUpdated }: MenuEdi
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
+                  )}
                 </li>
               ))}
           </ul>
@@ -195,10 +200,12 @@ export function MenuEditor({ restaurant, categories, items, onUpdated }: MenuEdi
             <Card key={cat.id}>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>{cat.name}</CardTitle>
+                {!readOnly && (
                 <Button type="button" size="sm" variant="outline" onClick={() => startNewItem(cat.id)}>
                   <Plus className="h-4 w-4" />
                   Add item
                 </Button>
+                )}
               </CardHeader>
               <CardContent className="space-y-3">
                 {catItems.map((item) => (
@@ -217,6 +224,7 @@ export function MenuEditor({ restaurant, categories, items, onUpdated }: MenuEdi
                         </div>
                       </div>
                     </div>
+                    {!readOnly && (
                     <div className="flex gap-2">
                       <Button type="button" size="sm" variant="outline" onClick={() => startEdit(item)}>
                         Edit
@@ -233,6 +241,7 @@ export function MenuEditor({ restaurant, categories, items, onUpdated }: MenuEdi
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
+                    )}
                   </div>
                 ))}
               </CardContent>
@@ -240,7 +249,7 @@ export function MenuEditor({ restaurant, categories, items, onUpdated }: MenuEdi
           )
         })}
 
-      {editingItemId && (
+      {editingItemId && !readOnly && (
         <Card className="border-orange-200">
           <CardHeader>
             <CardTitle>{editingItemId === 'new' ? 'New item' : 'Edit item'}</CardTitle>

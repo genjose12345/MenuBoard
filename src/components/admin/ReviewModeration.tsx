@@ -10,6 +10,7 @@ interface ReviewModerationProps {
   reviews: ItemReview[]
   items: MenuItem[]
   onUpdated: () => void
+  readOnly?: boolean
 }
 
 function itemName(items: MenuItem[], itemId: string): string {
@@ -25,7 +26,7 @@ function formatDate(iso: string): string {
   })
 }
 
-export function ReviewModeration({ reviews, items, onUpdated }: ReviewModerationProps) {
+export function ReviewModeration({ reviews, items, onUpdated, readOnly = false }: ReviewModerationProps) {
   const pending = reviews.filter((r) => r.status === 'pending')
   const others = reviews.filter((r) => r.status !== 'pending')
 
@@ -60,6 +61,7 @@ export function ReviewModeration({ reviews, items, onUpdated }: ReviewModeration
                       <p className="mt-1 text-sm text-slate-700">{review.comment}</p>
                       <p className="mt-1 text-xs text-slate-400">{formatDate(review.createdAt)}</p>
                     </div>
+                    {!readOnly && (
                     <div className="flex gap-2">
                       <Button type="button" size="sm" onClick={() => handleModerate(review.id, 'approved')}>
                         <Check className="h-4 w-4" />
@@ -75,6 +77,7 @@ export function ReviewModeration({ reviews, items, onUpdated }: ReviewModeration
                         Reject
                       </Button>
                     </div>
+                    )}
                   </div>
                 </li>
               ))}

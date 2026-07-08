@@ -1,9 +1,9 @@
-import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Globe, Link2, Phone } from 'lucide-react'
 import { Layout } from '../components/Layout'
 import { createRestaurant } from '../lib/api'
-import { setOwnerSession } from '../lib/auth/session'
+import { useAuth } from '../lib/auth/AuthProvider'
 import { getMenuUrl } from '../lib/qr'
 import { slugify } from '../lib/utils'
 import { Button } from '../components/ui/button'
@@ -12,18 +12,23 @@ import { Label } from '../components/ui/label'
 
 export function GetStartedPage() {
   const navigate = useNavigate()
-  const location = useLocation()
-  const prefilledEmail = (location.state as { email?: string } | null)?.email ?? ''
+  const { user, restaurantId, refreshAccount } = useAuth()
+
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [tagline, setTagline] = useState('')
   const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState(prefilledEmail)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const previewSlug = slug.trim() || 'your-restaurant'
   const menuPreviewUrl = typeof window !== 'undefined' ? getMenuUrl(previewSlug) : `/menu/${previewSlug}`
+
+  useEffect(() => {
+    if (restaurantId) {
+      navigate(`/admin/${restaurantId}`, { replace: true })
+    }
+  }, [restaurantId, navigate])
 
   function handleNameChange(value: string) {
     setName(value)
@@ -43,7 +48,7 @@ export function GetStartedPage() {
         tagline: tagline.trim() || undefined,
         phone: phone.trim() || undefined,
       })
-      setOwnerSession({ email: email.trim() || 'owner@local.demo', restaurantId: restaurant.id })
+      await refreshAccount()
       navigate(`/admin/${restaurant.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create restaurant.')
@@ -59,7 +64,9 @@ export function GetStartedPage() {
           <div className="animate-fade-in-up">
             <h1 className="text-3xl font-extrabold text-slate-900">Set up your menu</h1>
             <p className="mt-2 text-slate-600">
-              Create your restaurant page — add categories, items, and display boards next.
+              {user?.email
+                ? `Signed in as ${user.email}. Create your restaurant page below.`
+                : 'Create your restaurant page — add categories, items, and display boards next.'}
             </p>
             <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div>
@@ -105,11 +112,6 @@ export function GetStartedPage() {
               <div>
                 <Label htmlFor="tagline">Tagline (optional)</Label>
                 <Input id="tagline" value={tagline} onChange={(e) => setTagline(e.target.value)} className="mt-1" placeholder="Fresh burgers daily" />
-              </div>
-
-              <div>
-                <Label htmlFor="email">Your email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1" />
               </div>
 
               {error && <p className="text-sm text-red-600">{error}</p>}

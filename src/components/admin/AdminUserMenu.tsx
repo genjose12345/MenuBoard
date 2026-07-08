@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown, LogOut, User } from 'lucide-react'
-import { getOwnerSession, clearOwnerSession } from '../../lib/auth/session'
+import { useAuth } from '../../lib/auth/AuthProvider'
 import { Button } from '../ui/button'
 
 interface AdminUserMenuProps {
@@ -9,10 +9,27 @@ interface AdminUserMenuProps {
 }
 
 export function AdminUserMenu({ restaurantName }: AdminUserMenuProps) {
-  const session = getOwnerSession()
+  const { user, profile, signOut, configured } = useAuth()
   const [open, setOpen] = useState(false)
-  const email = session?.email ?? 'owner@demo.local'
+
+  const email = user?.email ?? profile?.fullName ?? 'Account'
   const initial = email.charAt(0).toUpperCase()
+
+  async function handleSignOut() {
+    if (configured) await signOut()
+    window.location.href = '/login'
+  }
+
+  if (!user && configured) {
+    return (
+      <Button asChild variant="outline" size="sm">
+        <Link to="/login">
+          <User className="h-4 w-4" />
+          Log in
+        </Link>
+      </Button>
+    )
+  }
 
   return (
     <div className="relative">
@@ -49,10 +66,7 @@ export function AdminUserMenu({ restaurantName }: AdminUserMenuProps) {
             <button
               type="button"
               className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
-              onClick={() => {
-                clearOwnerSession()
-                window.location.href = '/login'
-              }}
+              onClick={() => void handleSignOut()}
             >
               <LogOut className="h-4 w-4" />
               Log out

@@ -29,17 +29,66 @@ Digital menu for restaurants: customers scan a **QR code** on their phone, or st
 - Node.js 18+
 - npm
 
-## Setup
+## Supabase setup (production auth + database)
+
+When `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set, the app uses **Supabase Auth** and **PostgreSQL** with Row Level Security instead of json-server.
+
+### 1. Run SQL in Supabase SQL Editor
+
+Run in order:
+
+1. [`supabase/schema.sql`](supabase/schema.sql) — tables, RLS policies, profile trigger
+2. [`supabase/seed_demo.sql`](supabase/seed_demo.sql) — demo-burger & demo-taco sample data
+
+### 2. Environment variables
+
+Copy [`.env.example`](.env.example) to `.env` and fill in from **Project Settings → API**:
+
+```
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-public-jwt-key
+```
+
+**Never** put the `service_role` key in the frontend or commit it to git.
+
+### 3. Vercel
+
+Add the same two env vars in your Vercel project settings, then redeploy.
+
+### 4. Auth flow
+
+| Step | Route |
+|------|-------|
+| Sign up | `/signup` → confirm email (if enabled) → `/get-started` |
+| Log in | `/login` → your admin dashboard |
+| Profile | `/profile` — name, email, password, business phone, plan |
+
+Each account can own **one restaurant**. Demo restaurants are read-only previews.
+
+### Security
+
+- **RLS** on all tables — public can read menus; only owners can write their data
+- **Supabase Auth** handles password hashing, sessions, and email updates
+- Demo restaurants (`is_demo = true`) cannot be modified or deleted
+- Reviews: public submit as `pending`; only owners see/moderate all reviews
+
+## Deploying to Vercel (without Supabase)
+
+If Supabase env vars are **not** set, the app falls back to serverless API routes in [`api/`](api/) backed by `server/db.json` (ephemeral writes).
+
+1. Import the repo in [Vercel](https://vercel.com) (framework preset: **Vite**)
+2. Build command: `npm run build` · Output directory: `dist`
+3. Deploy — demo menus at `/menu/demo-burger` and `/menu/demo-taco` should load immediately
+
+## Local development
 
 ```bash
-cd menu-price-board-qr
 npm install
+cp .env.example .env   # optional — enables Supabase when filled in
 npm run dev
 ```
 
-Starts:
-- **Vite** at http://localhost:5173 (or next free port)
-- **json-server** at http://localhost:3002 (proxied via `/api`)
+Without `.env`, local dev uses **json-server** at port 3002 (proxied via `/api`).
 
 ## Demo URLs
 
@@ -52,30 +101,12 @@ Starts:
 
 ## Create your own restaurant
 
-1. Go to **Get started** (`/get-started`)
-2. Enter restaurant name and URL slug
-3. Add categories and items in **Admin → Menu**
-4. Open **Display & QR** to copy links and download QR code
+1. **Sign up** at `/signup`, then **log in**
+2. Go to **Get started** (`/get-started`) — requires login when Supabase is enabled
+3. Enter restaurant name and URL slug
+4. Add categories and items in **Admin → Menu**
+5. Open **Display & QR** to copy links and download QR code
 
-## Deploying to Vercel
-
-The frontend is a static Vite build; menu data is served by **serverless API routes** in [`api/`](api/) (same REST shape as json-server). Vercel maps `/api/*` to those functions automatically — no json-server process is needed in production.
-
-1. Import the repo in [Vercel](https://vercel.com) (framework preset: **Vite**)
-2. Build command: `npm run build` · Output directory: `dist`
-3. Deploy — demo menus at `/menu/demo-burger` and `/menu/demo-taco` should load immediately
-
-**Note:** Writes on Vercel use an in-memory copy of [`server/db.json`](server/db.json) per serverless instance. Demo edits and new restaurants work for a session but can reset after idle/cold starts. For persistent production data, migrate to Supabase (see below).
-
-## Production path
-
-[`supabase/schema.sql`](supabase/schema.sql) defines PostgreSQL tables for a future Supabase migration with real auth. Local dev uses [`server/db.json`](server/db.json) via json-server.
-
-### Security (demo deployment)
-
-- Login is **demo-only** (any email/password opens the demo admin) — not suitable for real owners without Supabase Auth.
-- Admin routes are not server-protected; anyone with a restaurant ID can call write APIs. Use real auth before going live.
-- API validates URLs, field lengths, and review ratings; demo restaurants cannot be deleted.
 
 ## Pricing (planned)
 

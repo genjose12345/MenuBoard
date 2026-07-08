@@ -32,6 +32,7 @@ export interface Restaurant {
   branding: RestaurantBranding
   plan: PlanTier
   createdAt: string
+  isDemo?: boolean
 }
 
 export interface MenuCategory {
@@ -95,4 +96,13 @@ export interface SubmitReviewInput {
   customerName?: string
   rating: number
   comment: string
+}
+
+export interface UserProfile {
+  id: string
+  fullName: string | null
+  phone: string | null
+  avatarUrl: string | null
+  createdAt: string
+  updatedAt: string
 }
