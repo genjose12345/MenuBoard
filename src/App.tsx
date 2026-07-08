@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { RequireAuth } from './components/auth/RequireAuth'
 import { AdminPage } from './pages/AdminPage'
+import { ConfirmEmailPage } from './pages/ConfirmEmailPage'
 import { DisplayPage } from './pages/DisplayPage'
 import { GetStartedPage } from './pages/GetStartedPage'
 import { HomePage } from './pages/HomePage'
@@ -19,6 +20,7 @@ export function App() {
         <Route path="/admin/:restaurantId" element={<AdminPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/confirm-email" element={<ConfirmEmailPage />} />
         <Route
           path="/get-started"
           element={

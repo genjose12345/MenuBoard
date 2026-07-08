@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Layout } from '../components/Layout'
 import { Button } from '../components/ui/button'
@@ -12,7 +12,7 @@ import { setOwnerSession } from '../lib/auth/session'
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { configured, signIn, resendConfirmationEmail } = useAuth()
+  const { configured, signIn, resendConfirmationEmail, user, loading, restaurantId } = useAuth()
   const redirectTo = (location.state as { from?: string } | null)?.from
 
   const [email, setEmail] = useState('')
@@ -22,6 +22,18 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [needsConfirmation, setNeedsConfirmation] = useState(false)
+
+  // After clicking the email confirmation link, Supabase redirects here with a session
+  useEffect(() => {
+    if (loading || !configured || !user) return
+    if (redirectTo) {
+      navigate(redirectTo, { replace: true })
+    } else if (restaurantId) {
+      navigate(`/admin/${restaurantId}`, { replace: true })
+    } else {
+      navigate('/get-started', { replace: true })
+    }
+  }, [loading, configured, user, restaurantId, redirectTo, navigate])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

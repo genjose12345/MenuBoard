@@ -16,13 +16,11 @@ export function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
-    setMessage(null)
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.')
@@ -44,9 +42,7 @@ export function SignupPage() {
 
       const { needsEmailConfirmation } = await signUp(email, password, fullName)
       if (needsEmailConfirmation) {
-        setMessage(
-          'Account created! Check your email and click the confirmation link, then come back here to log in.',
-        )
+        navigate('/confirm-email', { state: { email: email.trim() } })
         return
       }
       navigate('/get-started')
@@ -81,7 +77,6 @@ export function SignupPage() {
             <Input id="confirmPassword" type="password" required minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="mt-1" autoComplete="new-password" />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          {message && <p className="text-sm text-green-700">{message}</p>}
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting ? 'Creating account…' : 'Create account'}
           </Button>

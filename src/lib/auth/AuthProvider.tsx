@@ -13,6 +13,7 @@ import { getRestaurantById, getUserRestaurantId } from '../api'
 import { getSupabase, isSupabaseConfigured } from '../supabase/client'
 import { profileFromDb } from '../supabase/mappers'
 import { formatAuthError } from './errors'
+import { getLoginRedirectUrl } from './site-url'
 
 interface AuthContextValue {
   configured: boolean
@@ -130,30 +131,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshAccount])
 
   const signUp = useCallback(async (email: string, password: string, fullName: string) => {
-    const redirectTo =
-      typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined
-
     const { data, error } = await getSupabase().auth.signUp({
       email: email.trim(),
       password,
       options: {
         data: { full_name: fullName.trim() },
-        emailRedirectTo: redirectTo,
+        emailRedirectTo: getLoginRedirectUrl(),
       },
     })
     if (error) throw new Error(formatAuthError(error))
-    await refreshAccount()
+    // No session until email is confirmed — do not refresh account here
     return { needsEmailConfirmation: !data.session }
-  }, [refreshAccount])
+  }, [])
 
   const resendConfirmationEmail = useCallback(async (email: string) => {
-    const redirectTo =
-      typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined
-
     const { error } = await getSupabase().auth.resend({
       type: 'signup',
       email: email.trim(),
-      options: { emailRedirectTo: redirectTo },
+      options: { emailRedirectTo: getLoginRedirectUrl() },
     })
     if (error) throw new Error(formatAuthError(error))
   }, [])

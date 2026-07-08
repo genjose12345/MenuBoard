@@ -67,16 +67,45 @@ Add the same two env vars in your Vercel project settings, then redeploy.
 
 Each account can own **one restaurant**. Demo restaurants are read-only previews.
 
-**Login returns 400?** Common causes:
+### 5. Email confirmation (required for “Confirm email” ON)
 
-1. **Email not confirmed** — check inbox/spam, or click “Resend confirmation email” on the login page.
-2. **Wrong password** — use the same password from signup.
-3. **No account yet** — sign up first at `/signup`.
+Supabase will **not send** confirmation emails unless these are configured:
 
-To skip email confirmation during testing: Supabase Dashboard → **Authentication** → **Providers** → **Email** → disable **Confirm email**, then sign up again.
+#### A. URL Configuration (Supabase Dashboard → Authentication → URL Configuration)
 
-Also add your site URL under **Authentication** → **URL Configuration** → **Redirect URLs**:
-`https://your-app.vercel.app/login`
+| Field | Value |
+|-------|-------|
+| **Site URL** | `https://menu-board-beta.vercel.app` (your live URL) |
+| **Redirect URLs** | `https://menu-board-beta.vercel.app/login` |
+
+Add every domain you use (production + `http://localhost:5173/login` for local testing).
+
+#### B. Vercel env var (required for correct email links)
+
+```
+VITE_SITE_URL=https://menu-board-beta.vercel.app
+```
+
+Redeploy after adding. Confirmation emails use this URL, not the Supabase REST URL.
+
+#### C. Check if Supabase tried to send
+
+Supabase Dashboard → **Authentication** → **Logs** — look for signup events and email errors.
+
+#### D. Built-in email limits
+
+Supabase’s default mailer has **strict rate limits** (~2–4 emails/hour) and often lands in **spam**. For reliable delivery, set up **Custom SMTP**:
+
+1. Authentication → **SMTP Settings** → Enable custom SMTP
+2. Use [Resend](https://resend.com), SendGrid, or similar (free tiers available)
+3. Set sender e.g. `noreply@yourdomain.com`
+
+#### E. If you signed up before email was working
+
+1. Authentication → **Users** → delete the old unconfirmed user, **or**
+2. Go to `/confirm-email` and click **Resend confirmation email**
+
+After redeploy: sign up → you’ll land on `/confirm-email` with a resend button.
 
 ### Security
 
