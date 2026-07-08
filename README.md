@@ -49,6 +49,8 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-public-jwt-key
 ```
 
+Use the **Project URL** from the API settings page — do **not** append `/rest/v1/`. The Supabase JS client adds paths itself; using the REST URL causes auth 404 errors.
+
 **Never** put the `service_role` key in the frontend or commit it to git.
 
 ### 3. Vercel
