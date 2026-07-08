@@ -1,5 +1,4 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import seedDb from '../../server/db.json'
 
 export type CollectionName = 'restaurants' | 'menu_categories' | 'menu_items' | 'item_reviews'
 
@@ -22,8 +21,7 @@ const COLLECTIONS: CollectionName[] = [
 let db: Db | null = null
 
 function loadSeed(): Db {
-  const path = join(process.cwd(), 'server', 'db.json')
-  return JSON.parse(readFileSync(path, 'utf-8')) as Db
+  return JSON.parse(JSON.stringify(seedDb)) as Db
 }
 
 export function getDb(): Db {

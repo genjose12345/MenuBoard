@@ -18,26 +18,26 @@ function sendJson(res: VercelResponse, status: number, body: unknown): void {
 }
 
 export default function handler(req: VercelRequest, res: VercelResponse): void {
-  res.setHeader('Cache-Control', 'no-store')
-
-  const method = req.method ?? 'GET'
-  if (!ALLOWED_METHODS.has(method)) {
-    sendJson(res, 405, { error: 'Method not allowed' })
-    return
-  }
-
-  const segments = parsePathParam(req.query.path)
-  const collectionName = segments[0]
-  const id = segments[1]
-
-  if (!collectionName || !isCollection(collectionName)) {
-    sendJson(res, 404, { error: 'Not found' })
-    return
-  }
-
-  const collection = collectionName as CollectionName
-
   try {
+    res.setHeader('Cache-Control', 'no-store')
+
+    const method = req.method ?? 'GET'
+    if (!ALLOWED_METHODS.has(method)) {
+      sendJson(res, 405, { error: 'Method not allowed' })
+      return
+    }
+
+    const segments = parsePathParam(req.query.path)
+    const collectionName = segments[0]
+    const id = segments[1]
+
+    if (!collectionName || !isCollection(collectionName)) {
+      sendJson(res, 404, { error: 'Not found' })
+      return
+    }
+
+    const collection = collectionName as CollectionName
+
     if (method === 'GET') {
       if (id) {
         const row = getById(collection, id)
@@ -85,7 +85,8 @@ export default function handler(req: VercelRequest, res: VercelResponse): void {
     sendJson(res, 405, { error: 'Method not allowed' })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Request failed'
-    const status = message === 'Not found' ? 404 : message === 'Record already exists' ? 409 : 400
+    const status =
+      message === 'Not found' ? 404 : message === 'Record already exists' ? 409 : 400
     sendJson(res, status, { error: message })
   }
 }
