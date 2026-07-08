@@ -92,13 +92,57 @@ Redeploy after adding. Confirmation emails use this URL, not the Supabase REST U
 
 Supabase Dashboard → **Authentication** → **Logs** — look for signup events and email errors.
 
-#### D. Built-in email limits
+#### D. Custom SMTP (required to edit email templates)
 
-Supabase’s default mailer has **strict rate limits** (~2–4 emails/hour) and often lands in **spam**. For reliable delivery, set up **Custom SMTP**:
+Supabase **blocks template editing** until Custom SMTP is enabled. You’ll see: *“Set up custom SMTP to edit templates.”* The built-in `noreply@mail.app.supabase.io` sender cannot be customized without this.
 
-1. Authentication → **SMTP Settings** → Enable custom SMTP
-2. Use [Resend](https://resend.com), SendGrid, or similar (free tiers available)
-3. Set sender e.g. `noreply@yourdomain.com`
+**Recommended: [Resend](https://resend.com) (free tier, works with Supabase)**
+
+**Step 1 — Resend account**
+
+1. Sign up at [resend.com](https://resend.com)
+2. Go to **API Keys** → Create API Key → copy it (`re_...`)
+
+**Step 2 — Sender address (pick one)**
+
+| Option | Sender email | When to use |
+|--------|----------------|-------------|
+| **Quick test** | `onboarding@resend.dev` | No domain needed; can only send to your own verified email in Resend |
+| **Production** | `noreply@yourdomain.com` | Add domain in Resend → **Domains** → verify DNS (DKIM/SPF) |
+
+**Step 3 — Supabase SMTP Settings**
+
+Supabase → **Authentication** → **Email** → **SMTP Settings**:
+
+| Field | Value |
+|-------|--------|
+| Enable custom SMTP | ON |
+| Sender email | `onboarding@resend.dev` (test) or `noreply@yourdomain.com` |
+| Sender name | `MenuBoard` |
+| Host | `smtp.resend.com` |
+| Port | `465` |
+| Username | `resend` |
+| Password | your Resend API key (`re_...`) |
+
+Click **Save**.
+
+**Step 4 — Customize the email (now unlocked)**
+
+Authentication → **Email Templates** → **Confirm signup**
+
+| Field | Example |
+|-------|---------|
+| **Subject** | `Confirm your MenuBoard account` |
+| **Body** | HTML below — **must keep** `{{ .ConfirmationURL }}` |
+
+```html
+<h2>Welcome to MenuBoard</h2>
+<p>Click below to confirm your email and start building your digital menu:</p>
+<p><a href="{{ .ConfirmationURL }}">Confirm my email</a></p>
+<p>This link expires in 1 hour. If you didn't sign up, ignore this email.</p>
+```
+
+Docs: [Resend + Supabase SMTP](https://resend.com/docs/send-with-supabase-smtp) · [Supabase SMTP guide](https://supabase.com/docs/guides/auth/auth-smtp)
 
 #### E. If you signed up before email was working
 
@@ -116,26 +160,6 @@ If clicking the email sends you to `http://localhost:3000/#error=...`, your **Si
 3. Save, then **Resend** confirmation (old links are invalid)
 
 The `otp_expired` error means the link was already used or is older than ~1 hour — request a fresh one.
-
-#### G. Customize the confirmation email
-
-Supabase Dashboard → **Authentication** → **Email Templates** → **Confirm signup**
-
-| Field | What to change |
-|-------|----------------|
-| **Subject** | e.g. `Confirm your MenuBoard account` |
-| **Body** | HTML — keep the `{{ .ConfirmationURL }}` link variable |
-
-Example body:
-
-```html
-<h2>Welcome to MenuBoard</h2>
-<p>Click below to confirm your email and start building your digital menu:</p>
-<p><a href="{{ .ConfirmationURL }}">Confirm my email</a></p>
-<p>This link expires in 1 hour. If you didn't sign up, ignore this email.</p>
-```
-
-For custom **sender name/address** (`MenuBoard <you@yourdomain.com>` instead of `noreply@mail.app.supabase.io`), enable **Custom SMTP** (section D above).
 
 ### Security
 
