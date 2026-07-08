@@ -107,6 +107,36 @@ Supabase’s default mailer has **strict rate limits** (~2–4 emails/hour) and 
 
 After redeploy: sign up → you’ll land on `/confirm-email` with a resend button.
 
+#### F. Fix `localhost:3000` in confirmation links
+
+If clicking the email sends you to `http://localhost:3000/#error=...`, your **Site URL** is still the Supabase default.
+
+1. Authentication → **URL Configuration**
+2. Change **Site URL** from `http://localhost:3000` → `https://menu-board-beta.vercel.app`
+3. Save, then **Resend** confirmation (old links are invalid)
+
+The `otp_expired` error means the link was already used or is older than ~1 hour — request a fresh one.
+
+#### G. Customize the confirmation email
+
+Supabase Dashboard → **Authentication** → **Email Templates** → **Confirm signup**
+
+| Field | What to change |
+|-------|----------------|
+| **Subject** | e.g. `Confirm your MenuBoard account` |
+| **Body** | HTML — keep the `{{ .ConfirmationURL }}` link variable |
+
+Example body:
+
+```html
+<h2>Welcome to MenuBoard</h2>
+<p>Click below to confirm your email and start building your digital menu:</p>
+<p><a href="{{ .ConfirmationURL }}">Confirm my email</a></p>
+<p>This link expires in 1 hour. If you didn't sign up, ignore this email.</p>
+```
+
+For custom **sender name/address** (`MenuBoard <you@yourdomain.com>` instead of `noreply@mail.app.supabase.io`), enable **Custom SMTP** (section D above).
+
 ### Security
 
 - **RLS** on all tables — public can read menus; only owners can write their data

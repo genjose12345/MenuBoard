@@ -44,7 +44,7 @@ export function ConfirmEmailPage() {
           Click the link in that email, then log in.
         </p>
         <p className="mt-2 text-xs text-slate-500">
-          Didn&apos;t get it? Check spam, wait 2–3 minutes, or resend below.
+          Links expire after about 1 hour. Didn&apos;t get it? Check spam, or resend below.
         </p>
 
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}

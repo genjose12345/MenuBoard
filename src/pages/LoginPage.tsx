@@ -6,6 +6,12 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { useAuth } from '../lib/auth/AuthProvider'
 import { isEmailNotConfirmedError } from '../lib/auth/errors'
+import {
+  clearAuthHash,
+  formatAuthHashError,
+  isExpiredConfirmationError,
+  parseAuthHashError,
+} from '../lib/auth/hash-errors'
 import { getUserRestaurantId } from '../lib/api'
 import { setOwnerSession } from '../lib/auth/session'
 
@@ -22,6 +28,18 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [needsConfirmation, setNeedsConfirmation] = useState(false)
+
+  // Handle Supabase redirect errors (expired link, wrong Site URL, etc.)
+  useEffect(() => {
+    const hashError = parseAuthHashError()
+    if (!hashError) return
+
+    setError(formatAuthHashError(hashError))
+    if (isExpiredConfirmationError(hashError)) {
+      setNeedsConfirmation(true)
+    }
+    clearAuthHash()
+  }, [])
 
   // After clicking the email confirmation link, Supabase redirects here with a session
   useEffect(() => {
